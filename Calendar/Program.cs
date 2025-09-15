@@ -24,7 +24,7 @@ builder.Services.AddScoped<IEventsRepo, EventsRepo>();
 
 builder.Services.AddScoped<IRecurrence, Recurrence>();
 
-
+// sample
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
