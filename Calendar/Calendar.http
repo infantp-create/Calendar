@@ -1,0 +1,6 @@
+@Calendar_HostAddress = http://localhost:5231
+
+GET {{Calendar_HostAddress}}/api/appointments/
+Accept: application/json
+
+###
