@@ -1,6 +1,7 @@
 
 using Calendar.Dto.Users;
 using Calendar.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Calendar.Controllers;
@@ -9,44 +10,67 @@ namespace Calendar.Controllers;
 [Route("api/[controller]")]
 public class UsersController : ControllerBase
 {
-    private readonly UsersService _service;
+    private readonly UsersService _usersService;
+    private readonly JwtService _jwtService;
 
-    public UsersController(UsersService service)
+    public UsersController(UsersService usersService, JwtService jwtService)
     {
-        _service = service;
+        _usersService = usersService;
+        _jwtService = jwtService;
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<UserDto>>> GetUsers()
     {
-        var users = await _service.GetUsers();
+        var users = await _usersService.GetUsers();
         return Ok(users);
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] UserRegisterDto dto)
+    public async Task<IActionResult> Register(UserRegisterDto dto)
     {
-        var result = await _service.Register(dto);
-        if (!result.Success)
-            return Conflict(new { error = result.Error });
+        var result = await _usersService.Register(dto);
+        if (!result.Success) return BadRequest(new { result.Error });
 
-        return CreatedAtAction(nameof(GetUsers), new { id = result.User!.Id }, result.User);
+        // 🔑 Auto-generate JWT after register
+        var token = _jwtService.GenerateToken(result.User!.Id, result.User.UserName, result.User.Email);
+
+        return Ok(new
+        {
+            token,
+            user = result.User
+        });
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginDto dto)
+    public async Task<IActionResult> Login(UserLoginDto dto)
     {
-        var result = await _service.Login(dto);
-        if (!result.Success)
-            return Unauthorized(new { error = result.Error });
+        var result = await _usersService.Login(dto, _jwtService);
+        if (!result.Success) return BadRequest(new { result.Error });
 
-        return Ok(result.User);
+        return Ok(new
+        {
+            token = result.Token,
+            user = result.User
+        });
     }
+    
+    [HttpGet("me")]
+    [Authorize] // ✅ protect with JWT
+    public IActionResult Me()
+    {
+        var userId = User.FindFirst("sub")?.Value;
+        var userName = User.Identity?.Name;
+        var email = User.FindFirst("email")?.Value;
+
+        return Ok(new { userId, userName, email });
+    }
+
 
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateDto dto)
     {
-        var result = await _service.UpdateUser(id, dto);
+        var result = await _usersService.UpdateUser(id, dto);
         if (!result.Success)
             return NotFound(new { error = result.Error });
 
@@ -56,7 +80,7 @@ public class UsersController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
-        var result = await _service.DeleteUser(id);
+        var result = await _usersService.DeleteUser(id);
         if (!result.Success)
             return NotFound(new { error = result.Error });
 

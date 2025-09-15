@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\New folder\\Calendar\\Calendar\\Calendar.csproj": {}
+    "E:\\Calendar_With_Events\\Calendar\\Calendar\\Calendar.csproj": {}
   },
   "projects": {
-    "E:\\New folder\\Calendar\\Calendar\\Calendar.csproj": {
+    "E:\\Calendar_With_Events\\Calendar\\Calendar\\Calendar.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\New folder\\Calendar\\Calendar\\Calendar.csproj",
+        "projectUniqueName": "E:\\Calendar_With_Events\\Calendar\\Calendar\\Calendar.csproj",
         "projectName": "Calendar",
-        "projectPath": "E:\\New folder\\Calendar\\Calendar\\Calendar.csproj",
+        "projectPath": "E:\\Calendar_With_Events\\Calendar\\Calendar\\Calendar.csproj",
         "packagesPath": "C:\\Users\\infant.p_disprz\\.nuget\\packages\\",
-        "outputPath": "E:\\New folder\\Calendar\\Calendar\\obj\\",
+        "outputPath": "E:\\Calendar_With_Events\\Calendar\\Calendar\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

@@ -1,34 +1,32 @@
-using Calendar.Data;
+using Calendar.Repositories;
 using Calendar.Models;
 using Calendar.Dto.Users;
-using Microsoft.EntityFrameworkCore;
 
 namespace Calendar.Services;
 
 public class UsersService
 {
-    private readonly AppDbContext _context;
+    private readonly IUsersRepo _usersRepo;
 
-    public UsersService(AppDbContext context)
+    public UsersService(IUsersRepo usersRepo)
     {
-        _context = context;
+        _usersRepo = usersRepo;
     }
 
     public async Task<List<UserDto>> GetUsers()
     {
-        return await _context.Users
-            .Select(u => new UserDto
-            {
-                Id = u.Id,
-                UserName = u.Name,
-                Email = u.Email
-            })
-            .ToListAsync();
+        var users = await _usersRepo.GetUsers();
+        return users.Select(u => new UserDto
+        {
+            Id = u.Id,
+            UserName = u.Name,
+            Email = u.Email
+        }).ToList();
     }
 
     public async Task<(bool Success, string? Error, UserDto? User)> Register(UserRegisterDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        if (await _usersRepo.EmailExists(dto.Email))
             return (false, "Email already registered.", null);
 
         var user = new Users
@@ -38,8 +36,7 @@ public class UsersService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _usersRepo.AddUser(user);
 
         var userDto = new UserDto
         {
@@ -51,9 +48,9 @@ public class UsersService
         return (true, null, userDto);
     }
 
-    public async Task<(bool Success, string? Error, UserDto? User)> Login(UserLoginDto dto)
+    public async Task<(bool Success, string? Error,string? Token, UserDto? User)> Login(UserLoginDto dto, JwtService jwtService)
     {
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        var user = await _usersRepo.GetUserByEmail(dto.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             return (false, "Invalid email or password.", null);
 
@@ -63,13 +60,15 @@ public class UsersService
             UserName = user.Name,
             Email = user.Email
         };
+        
+        var token = jwtService.GenerateToken(user.Id, user.Name, user.Email);
 
-        return (true, null, userDto);
+        return (true, null, token, userDto);
     }
 
     public async Task<(bool Success, string? Error, UserDto? User)> UpdateUser(int id, UserUpdateDto dto)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _usersRepo.GetUserById(id);
         if (user == null) return (false, "User not found.", null);
 
         user.Name = dto.UserName;
@@ -77,7 +76,7 @@ public class UsersService
         if (!string.IsNullOrWhiteSpace(dto.Password))
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
-        await _context.SaveChangesAsync();
+        await _usersRepo.UpdateUser(user);
 
         var userDto = new UserDto
         {
@@ -91,11 +90,10 @@ public class UsersService
 
     public async Task<(bool Success, string? Error)> DeleteUser(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _usersRepo.GetUserById(id);
         if (user == null) return (false, "User not found.");
 
-        _context.Users.Remove(user);
-        await _context.SaveChangesAsync();
+        await _usersRepo.DeleteUser(user);
         return (true, null);
     }
 }
