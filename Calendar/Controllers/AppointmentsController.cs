@@ -1,6 +1,9 @@
 using Calendar.Dto.Appointments;
 using Calendar.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace Calendar.Controllers;
 
@@ -15,7 +18,7 @@ public class AppointmentsController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("{userId}")]
+    [HttpGet("{userId}"), Authorize]
     public async Task<ActionResult<IEnumerable<AppointmentDto>>> GetAppointments(
         int userId,
         [FromQuery] DateTime? startDate,

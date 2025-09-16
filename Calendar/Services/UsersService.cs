@@ -52,7 +52,7 @@ public class UsersService
     {
         var user = await _usersRepo.GetUserByEmail(dto.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-            return (false, "Invalid email or password.", null);
+            return (false, "Invalid email or password.",null, null);
 
         var userDto = new UserDto
         {
