@@ -68,7 +68,7 @@ public class UsersController : ControllerBase
     }
 
 
-    [HttpPut("{id}")]
+    [HttpPut("{id}"), Authorize]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UserUpdateDto dto)
     {
         var result = await _usersService.UpdateUser(id, dto);
